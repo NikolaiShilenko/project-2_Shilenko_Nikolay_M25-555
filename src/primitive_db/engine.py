@@ -3,22 +3,26 @@ import shlex
 import prompt
 from prettytable import PrettyTable
 
+from ..decorators import create_cacher
 from . import core, utils
 
 
 def print_help():
     """Выводит справочную информацию."""
     print("\n***Операции с данными***")
-    print("Функции:")
+    print("Функции управления таблицами:")
+    print("<command> create_table <имя_таблицы> "
+          "<столбец1:тип> <столбец2:тип> .. - создать таблицу")
+    print("<command> list_tables - показать список всех таблиц")
+    print("<command> drop_table <имя_таблицы> - удалить таблицу")
+    print("\nФункции работы с данными:")
     print("<command> insert into <имя_таблицы> values "
           "(<значение1>, <значение2>, ...) - создать запись")
-    print("<command> select from <имя_таблицы> where <столбец> = "
-          "<значение> - прочитать записи по условию")
     print("<command> select from <имя_таблицы> "
-          "- прочитать все записи")
-    print(
-        "<command> update <имя_таблицы> set <столбец1> = <новое_значение1> "
-        "where <столбец_условия> = <значение_условия> - обновить запись")
+          "where <столбец> = <значение> - прочитать записи по условию")
+    print("<command> select from <имя_таблицы> - прочитать все записи")
+    print("<command> update <имя_таблицы> set <столбец1> = <новое_значение1> "
+          "where <столбец_условия> = <значение_условия> - обновить запись")
     print("<command> delete from <имя_таблицы> "
           "where <столбец> = <значение> - удалить запись")
     print("<command> info <имя_таблицы> - вывести информацию о таблице")
@@ -40,6 +44,18 @@ def parse_where(where_str):
         parts = where_str.split("=", 1)
         col = parts[0].strip()
         val = parts[1].strip()
+
+        # преобразуем строковые значения к базовым типам
+        if val.lower() == "true":
+            val = True
+        elif val.lower() == "false":
+            val = False
+        elif val.isdigit():
+            val = int(val)
+        elif (val.startswith('"') and val.endswith('"')) or \
+                (val.startswith("'") and val.endswith("'")):
+            val = val[1:-1]  # убираем кавычки
+
         return {col: val}
 
     return None
@@ -50,7 +66,7 @@ def parse_set(set_str):
     if not set_str:
         return None
 
-    # Убираем возможные пробелы
+    # убрать пробелы если есть
     set_str = set_str.strip()
 
     result = {}
@@ -60,18 +76,20 @@ def parse_set(set_str):
         for part in parts:
             if "=" in part:
                 col, val = part.split("=", 1)
-                result[col.strip()] = val.strip()
+                result[col.strip()] = val.strip()  # <-- Оставляем строкой
     elif "=" in set_str:
         col, val = set_str.split("=", 1)
-        result[col.strip()] = val.strip()
+        result[col.strip()] = val.strip()  # <-- Оставляем строкой
 
     return result
 
 
 def run():
-    """Основной цикл работы базы данных."""
     print("***Операции с данными***")
     print_help()
+
+    # Создаем кэш для select запросов
+    cacher = create_cacher()
 
     while True:
         # загрузить актуальные метаданные
@@ -105,12 +123,13 @@ def run():
         elif command == "create_table":
             if len(args) < 3:
                 print("Ошибка: Недостаточно аргументов. "
-                      "Формат: create_table <имя> <столбец1:тип> ...")
+                      "Формат: create_table <имя> <столбец1:тип> <столбец2:тип> ...")
                 continue
             table_name = args[1]
             columns = args[2:]
-            metadata = core.create_table(metadata, table_name, columns)
-            if table_name in metadata:
+            new_metadata = core.create_table(metadata, table_name, columns)
+            if new_metadata is not None and table_name in new_metadata:
+                metadata = new_metadata
                 utils.save_metadata(metadata)
 
         elif command == "list_tables":
@@ -122,9 +141,9 @@ def run():
                       "Формат: drop_table <имя>")
                 continue
             table_name = args[1]
-            old_len = len(metadata)
-            metadata = core.drop_table(metadata, table_name)
-            if len(metadata) != old_len:
+            new_metadata = core.drop_table(metadata, table_name)
+            if new_metadata is not None and table_name not in new_metadata:
+                metadata = new_metadata
                 utils.save_metadata(metadata)
 
         elif command == "info":
@@ -182,10 +201,10 @@ def run():
                     print("Ошибка: Некорректное условие WHERE")
                     continue
 
-                data = core.select(table_name, where_clause)
+                data = core.select(table_name, where_clause, cacher)
             else:
                 # без WHERE
-                data = core.select(table_name)
+                data = core.select(table_name, None, cacher)
 
             # вывод результата через PrettyTable
             if data:

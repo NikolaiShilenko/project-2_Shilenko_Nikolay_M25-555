@@ -1,11 +1,12 @@
+from ..decorators import confirm_action, handle_db_errors, log_time
 from .utils import load_table_data, save_table_data
 
 
+@handle_db_errors
 def create_table(metadata, table_name, columns):
     """Создает новую таблицу в метаданных."""
     if table_name in metadata:
-        print(f'Ошибка: Таблица "{table_name}" уже существует.')
-        return metadata
+        raise ValueError(f'Таблица "{table_name}" уже существует.')
 
     valid_types = {"int", "str", "bool"}
     table_columns = []
@@ -15,13 +16,12 @@ def create_table(metadata, table_name, columns):
 
     for column in columns:
         if ':' not in column:
-            print(f'Некорректный формат столбца: {column}')
-            return metadata
+            raise ValueError(f'Некорректный формат столбца: {column}')
 
         col_name, col_type = column.split(':', 1)
         if col_type not in valid_types:
-            print(f'Некорректный тип данных: {col_type}. Допустимые: int, str, bool')
-            return metadata
+            raise ValueError(f'Некорректный тип данных: {col_type}. '
+                             f'Допустимые: int, str, bool')
 
         table_columns.append(f"{col_name}:{col_type}")
 
@@ -35,11 +35,12 @@ def create_table(metadata, table_name, columns):
     return metadata
 
 
+@handle_db_errors
+@confirm_action("удаление таблицы")
 def drop_table(metadata, table_name):
     """Удаляет таблицу из метаданных."""
     if table_name not in metadata:
-        print(f'Ошибка: Таблица "{table_name}" не существует.')
-        return metadata
+        raise KeyError(f'Таблица "{table_name}" не существует.')
 
     del metadata[table_name]
     print(f'Таблица "{table_name}" успешно удалена.')
@@ -54,6 +55,7 @@ def drop_table(metadata, table_name):
     return metadata
 
 
+@handle_db_errors
 def list_tables(metadata):
     """Выводит список всех таблиц."""
     if not metadata:
@@ -83,11 +85,12 @@ def _convert_value(value_str, col_type):
         return value_str
 
 
+@handle_db_errors
+@log_time
 def insert(metadata, table_name, values):
     """Добавляет новую запись в таблицу."""
     if table_name not in metadata:
-        print(f'Ошибка: Таблица "{table_name}" не существует.')
-        return None
+        raise KeyError(f'Таблица "{table_name}" не существует.')
 
     # загрузить данные таблицы
     table_data = load_table_data(table_name)
@@ -97,9 +100,8 @@ def insert(metadata, table_name, values):
 
     # Проверяем количество значений
     if len(values) != len(columns_schema):
-        print(f'Ошибка: Ожидается {len(columns_schema)} значений,'
-              f' получено {len(values)}')
-        return None
+        raise ValueError(f'Ожидается {len(columns_schema)} значений, '
+                         f'получено {len(values)}')
 
     # Генерим новый ID
     if table_data:
@@ -114,12 +116,8 @@ def insert(metadata, table_name, values):
     # Добавить значения с проверкой типов
     for i, col_schema in enumerate(columns_schema):
         col_name, col_type = col_schema.split(":")
-        try:
-            converted_value = _convert_value(values[i], col_type)
-            new_row[col_name] = converted_value
-        except (ValueError, TypeError) as e:
-            print(f'Ошибка преобразования типа для столбца {col_name}: {e}')
-            return None
+        converted_value = _convert_value(values[i], col_type)
+        new_row[col_name] = converted_value
 
     # запись в данные
     table_data.append(new_row)
@@ -131,7 +129,9 @@ def insert(metadata, table_name, values):
     return table_data
 
 
-def select(table_name, where_clause=None):
+@handle_db_errors
+@log_time
+def select(table_name, where_clause=None, cacher=None):
     """Выбирает записи из таблицы."""
     table_data = load_table_data(table_name)
 
@@ -152,11 +152,11 @@ def select(table_name, where_clause=None):
     return filtered_data
 
 
+@handle_db_errors
 def update(metadata, table_name, set_clause, where_clause):
     """Обновляет записи в таблице."""
     if table_name not in metadata:
-        print(f'Ошибка: Таблица "{table_name}" не существует.')
-        return None
+        raise KeyError(f'Таблица "{table_name}" не существует.')
 
     table_data = load_table_data(table_name)
     updated_count = 0
@@ -180,12 +180,8 @@ def update(metadata, table_name, set_clause, where_clause):
             # Обновляем поля согласно SET
             for col, new_val in set_clause.items():
                 if col in columns_schema:
-                    try:
-                        converted_value = _convert_value(new_val, columns_schema[col])
-                        row[col] = converted_value
-                    except (ValueError, TypeError) as e:
-                        print(f'Ошибка преобразования типа для столбца {col}: {e}')
-                        return None
+                    converted_value = _convert_value(new_val, columns_schema[col])
+                    row[col] = converted_value
             updated_count += 1
 
     if updated_count > 0:
@@ -195,6 +191,8 @@ def update(metadata, table_name, set_clause, where_clause):
     return table_data
 
 
+@handle_db_errors
+@confirm_action("удаление записей")
 def delete(table_name, where_clause):
     """Удаляет записи из таблицы."""
     table_data = load_table_data(table_name)
@@ -226,11 +224,11 @@ def delete(table_name, where_clause):
     return table_data
 
 
+@handle_db_errors
 def info_table(metadata, table_name):
     """Выводит информацию о таблице."""
     if table_name not in metadata:
-        print(f'Ошибка: Таблица "{table_name}" не существует.')
-        return
+        raise KeyError(f'Таблица "{table_name}" не существует.')
 
     # Загружаем данные таблицы
     table_data = load_table_data(table_name)
