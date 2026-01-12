@@ -19,3 +19,6 @@ endif
 
 lint:
 	poetry run ruff check .
+
+database:
+	poetry run database

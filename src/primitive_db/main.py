@@ -3,7 +3,7 @@ from . import engine
 
 
 def main():
-    engine.welcome()
+    engine.run()
 
 
 if __name__ == "__main__":
