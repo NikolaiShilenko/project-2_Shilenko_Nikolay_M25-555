@@ -1,0 +1,43 @@
+# Byte-compiled / optimized / compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+*.pyd
+*.so
+
+# Virtual environment
+.venv/
+venv/
+env/
+
+# Editor/IDE specific files
+.vscode/
+.idea/
+*.swp
+*.bak
+*.swo
+*.iml
+*.iws
+*.ipr
+
+# Temporary files and logs
+*.log
+tmp/
+.DS_Store
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+.coverage
+
+# Poetry
+poetry.lock
+
+# Unit test / coverage reports
+.pytest_cache/
+htmlcov/
+
+# Environment variables
+.env
