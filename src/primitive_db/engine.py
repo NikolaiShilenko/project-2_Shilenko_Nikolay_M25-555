@@ -5,6 +5,7 @@ from prettytable import PrettyTable
 
 from ..decorators import create_cacher
 from . import core, utils
+from .parser import parse_set, parse_where
 
 
 def print_help():
@@ -29,59 +30,6 @@ def print_help():
     print("\nОбщие команды:")
     print("<command> exit - выход из программы")
     print("<command> help - справочная информация\n")
-
-
-def parse_where(where_str):
-    """Парсит условие WHERE в словарь."""
-    if not where_str:
-        return None
-
-    # Убираем возможные пробелы
-    where_str = where_str.strip()
-
-    # Разбиваем на части
-    if "=" in where_str:
-        parts = where_str.split("=", 1)
-        col = parts[0].strip()
-        val = parts[1].strip()
-
-        # преобразуем строковые значения к базовым типам
-        if val.lower() == "true":
-            val = True
-        elif val.lower() == "false":
-            val = False
-        elif val.isdigit():
-            val = int(val)
-        elif (val.startswith('"') and val.endswith('"')) or \
-                (val.startswith("'") and val.endswith("'")):
-            val = val[1:-1]  # убираем кавычки
-
-        return {col: val}
-
-    return None
-
-
-def parse_set(set_str):
-    """Парсит условие SET в словарь."""
-    if not set_str:
-        return None
-
-    # убрать пробелы если есть
-    set_str = set_str.strip()
-
-    result = {}
-    # Может быть несколько SET условий через запятую
-    if "," in set_str:
-        parts = set_str.split(",")
-        for part in parts:
-            if "=" in part:
-                col, val = part.split("=", 1)
-                result[col.strip()] = val.strip()  # <-- Оставляем строкой
-    elif "=" in set_str:
-        col, val = set_str.split("=", 1)
-        result[col.strip()] = val.strip()  # <-- Оставляем строкой
-
-    return result
 
 
 def run():

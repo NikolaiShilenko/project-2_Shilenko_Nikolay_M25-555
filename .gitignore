@@ -41,3 +41,10 @@ htmlcov/
 
 # Environment variables
 .env
+
+# DB files
+db_meta.json
+data/
+
+# Ruff cache
+.ruff_cache/

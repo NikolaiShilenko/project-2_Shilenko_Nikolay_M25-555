@@ -1,4 +1,5 @@
 from ..decorators import confirm_action, handle_db_errors, log_time
+from .constants import DATA_DIR, VALID_TYPES
 from .utils import load_table_data, save_table_data
 
 
@@ -8,7 +9,6 @@ def create_table(metadata, table_name, columns):
     if table_name in metadata:
         raise ValueError(f'Таблица "{table_name}" уже существует.')
 
-    valid_types = {"int", "str", "bool"}
     table_columns = []
 
     # Добавляем автоматический столбец ID
@@ -19,9 +19,9 @@ def create_table(metadata, table_name, columns):
             raise ValueError(f'Некорректный формат столбца: {column}')
 
         col_name, col_type = column.split(':', 1)
-        if col_type not in valid_types:
+        if col_type not in VALID_TYPES:
             raise ValueError(f'Некорректный тип данных: {col_type}. '
-                             f'Допустимые: int, str, bool')
+                             f'Допустимые: {", ".join(VALID_TYPES)}')
 
         table_columns.append(f"{col_name}:{col_type}")
 
@@ -48,7 +48,7 @@ def drop_table(metadata, table_name):
     # Удаляем файл с данными таблицы если онесть
     try:
         import os
-        os.remove(f"data/{table_name}.json")
+        os.remove(f"{DATA_DIR}{table_name}.json")
     except FileNotFoundError:
         pass
 

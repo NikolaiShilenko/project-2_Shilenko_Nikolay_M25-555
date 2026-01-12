@@ -1,16 +1,18 @@
 [tool.poetry]
 name = "project-2-shilenko-nikolay-m25-555"
 version = "0.1.0"
-description = ""
-authors = ["Nikolai Shilenko <nick.shilenko@gmail.com>"]
+description = "Домашнее задание №2. Примитивная база данных"
+authors = [
+    {name = "Nikolay Shilenko", email = "shilenko.nikolay@yandex.ru"}
+]
 readme = "README.md"
 packages = [
     { include = "src" },
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.13"
-prompt = "*"
+python = "^3.13"
+prompt = "^0.4.0"
 prettytable = "^3.17.0"
 
 [tool.poetry.group.dev.dependencies]
