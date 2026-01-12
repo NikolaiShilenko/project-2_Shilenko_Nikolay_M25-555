@@ -1,6 +1,9 @@
+#!/usr/bin/env python3
+from . import engine
+
+
 def main():
-    """Основная функция программы."""
-    print("DB project is running!")
+    engine.welcome()
 
 
 if __name__ == "__main__":
