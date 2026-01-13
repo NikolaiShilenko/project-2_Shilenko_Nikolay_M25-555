@@ -116,8 +116,7 @@ exit    # Выйти из программы
 ```
 
 ## 🎥 Демонстрация работы программы:
-https://asciinema.org/a/example.png
-
+[![Демонстрация работы базы данных](https://asciinema.org/a/3fsgVSEQw082ymRE.svg)](https://asciinema.org/a/3fsgVSEQw082ymRE)
 
 ## 📁 Структура проекта
     project-2_Shilenko_Nikolay_M25-555/
