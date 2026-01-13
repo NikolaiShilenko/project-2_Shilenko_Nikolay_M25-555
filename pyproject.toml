@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "project-2-shilenko-nikolay-m25-555"
 version = "0.1.0"
-description = ""
+description = "Домашнее задание №2. Примитивная база данных"
 authors = ["Nikolai Shilenko <nick.shilenko@gmail.com>"]
 readme = "README.md"
 packages = [
@@ -9,11 +9,26 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.13"
+python = "^3.12"
+prompt = "^0.4.0"
+prettytable = "^3.17.0"
+
+[tool.poetry.group.dev.dependencies]
+ruff = "*"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
+database = "src.primitive_db.main:main"
 project = "src.primitive_db.main:main"
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+exclude = ["venv", ".venv", "dist", "__pycache__"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+ignore = []
